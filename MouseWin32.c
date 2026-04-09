@@ -4,8 +4,16 @@
 LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     MSLLHOOKSTRUCT* lp = (MSLLHOOKSTRUCT*)lParam;
 
-    if (wParam == WM_LBUTTONDOWN) {
-        printf("Click");
+    switch(wParam) {
+        case WM_LBUTTONDOWN:
+            printf("Left Click\n");
+            break;
+        case WM_RBUTTONDOWN:
+            printf("Right Click\n");
+            break;
+        case WM_MBUTTONDOWN:
+            printf("Middle Click\n");
+            break;
     }
 
     return CallNextHookEx(0, nCode, wParam, lParam);
