@@ -67,6 +67,9 @@ int __cdecl main() {
         printf("recv failed with error %d\n", WSAGetLastError());
     }
 
+    recvbuf[iResult] = '\0';
+    puts(recvbuf);
+
     printf("Finished recieving. Closing socket.\n");
     iResult = closesocket(RecvSocket);
     if (iResult == SOCKET_ERROR) {
