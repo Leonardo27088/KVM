@@ -36,6 +36,8 @@ int __cdecl main() {
     char recvbuf[DEFAULT_BUFLEN];
     int recvbuflen = DEFAULT_BUFLEN;
 
+    char *message = "Hello Client";
+
     iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (iResult != NO_ERROR) {
         printf("WSAStartup failed with error: %d\n", iResult);
@@ -69,6 +71,8 @@ int __cdecl main() {
 
     recvbuf[iResult] = '\0';
     puts(recvbuf);
+
+    sendto(RecvSocket, message, strlen(message), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
 
     printf("Finished recieving. Closing socket.\n");
     iResult = closesocket(RecvSocket);
