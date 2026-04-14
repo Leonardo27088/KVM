@@ -14,7 +14,7 @@
 
 #define DEFAULT_BUFLEN 512
 
-int __cdecl main() {
+int main() {
     WSADATA wsaData;
     int iResult;
 
