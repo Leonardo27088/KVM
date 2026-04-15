@@ -28,9 +28,15 @@ int main() {
     }
 
     MSG msg;
-    while (GetMessage(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
+    boolean bRet;
+
+    while ((bRet = GetMessage(&msg, NULL, 0, 0)) != 0) {
+        if (bRet == -1) {
+            return 1;
+        } else {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
     }
 
     UnhookWindowsHookEx(mouseHandle);
