@@ -14,18 +14,43 @@
 
 #define DEFAULT_BUFLEN 512
 
+SOCKET RecvSocket;
+struct sockaddr_in RecvAddr;
+
+struct sockaddr_in SenderAddr;
+int SenderAddrSize = sizeof (SenderAddr);
+
+MSG msg;
+
+LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    MSLLHOOKSTRUCT* lp = (MSLLHOOKSTRUCT*)lParam;
+    const char* status = NULL;
+
+    switch(wParam) {
+        case WM_LBUTTONDOWN:
+            status = "Left Click";
+            break;
+        case WM_RBUTTONDOWN:
+            status = "Right Click";
+            break;
+        case WM_MBUTTONDOWN:
+            status = "Middle Click";
+            break;
+    }
+
+    if (status != NULL) {
+        sendto(RecvSocket, status, (int)strlen(status), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
+    }
+
+    return CallNextHookEx(0, nCode, wParam, lParam);
+}
+
 int main() {
     WSADATA wsaData;
     int iResult;
 
     SOCKET ListenSocket = INVALID_SOCKET;
     SOCKET ClientSocket = INVALID_SOCKET;
-    
-    SOCKET RecvSocket;
-    struct sockaddr_in RecvAddr;
-
-    struct sockaddr_in SenderAddr;
-    int SenderAddrSize = sizeof (SenderAddr);
 
     unsigned short Port = 27015;
 
@@ -73,6 +98,16 @@ int main() {
     puts(recvbuf);
 
     sendto(RecvSocket, message, strlen(message), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
+    printf("Hello client sent\n");
+
+    HHOOK mouseHandle = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
+
+    if (mouseHandle == NULL) {
+        printf("Error");
+        return 1;
+    }
+
+    GetMessage(&msg, NULL, 0, 0);
 
     printf("Finished recieving. Closing socket.\n");
     iResult = closesocket(RecvSocket);
@@ -80,6 +115,8 @@ int main() {
         printf("close socket failed with error %d\n", WSAGetLastError());
         return 1;
     }
+
+    UnhookWindowsHookEx(mouseHandle);
 
     WSACleanup();
     return 0;
