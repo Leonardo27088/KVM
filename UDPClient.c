@@ -9,6 +9,18 @@
 
 #define PORT 27015
 #define DEFAULT_BUFLEN 512
+
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t type;
+    float normX;
+    float normY;
+    uint8_t button;
+} MousePacket;
+#pragma pack(pop)
+
+MousePacket packet;
+
 int main() {
     char buffer[DEFAULT_BUFLEN];
     char *message = "Hello server";
@@ -32,8 +44,18 @@ int main() {
     printf("Hello Server sent\n");
 
     while (1) {
-        recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL, NULL);
-        puts(buffer);
+        int bytesRead = recvfrom(sockfd, &packet, sizeof(packet), 0, NULL, NULL);
+
+        if (bytesRead == sizeof(packet)) {
+            if (packet.type == 1) {
+                int targetX = (int)(packet.normX * 1600);
+                int targetY = (int)(packet.normY * 900);
+
+                printf("Move to: %d, %d\n", targetX, targetY);
+            }
+        }
+        // recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL, NULL);
+        // puts(buffer);
     }
 
     close(sockfd);
