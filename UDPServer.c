@@ -9,6 +9,16 @@
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
+
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t type;
+    float normX;
+    float normY;
+    uint8_t button;
+} MousePacket;
+#pragma pack(pop)
 
 #pragma comment (lib, "Ws2_32.lib");
 
@@ -26,6 +36,9 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     MSLLHOOKSTRUCT* lp = (MSLLHOOKSTRUCT*)lParam;
     const char* status = NULL;
 
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
     switch(wParam) {
         case WM_LBUTTONDOWN:
             status = "Left Click";
@@ -35,6 +48,15 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             break;
         case WM_MBUTTONDOWN:
             status = "Middle Click";
+            break;
+        case WM_MOUSEMOVE:
+            MousePacket packet;
+            packet.type = 1;
+            packet.normX = (float)lp->pt.x / screenWidth;
+            packet.normY = (float)lp->pt.y / screenHeight;
+            packet.button = 0;
+
+            sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
             break;
     }
 
