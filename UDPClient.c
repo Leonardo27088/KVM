@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <strings.h>
 #include <sys/types.h>
 #include <arpa/inet.h>
@@ -6,6 +7,8 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <libevdev-1.0/libevdev/libevdev.h>
+#include <libevdev-1.0/libevdev/libevdev-uinput.h>
 
 #define PORT 27015
 #define DEFAULT_BUFLEN 512
@@ -20,6 +23,13 @@ typedef struct {
 #pragma pack(pop)
 
 MousePacket packet;
+
+static void check(int i) {
+    if (i < 0) {
+        printf("%s\n", strerror(-i));
+        exit(1);
+    }
+}
 
 int main() {
     char buffer[DEFAULT_BUFLEN];
@@ -43,6 +53,25 @@ int main() {
     sendto(sockfd, message, DEFAULT_BUFLEN, 0, (struct sockaddr*)NULL, sizeof(servaddr));
     printf("Hello Server sent\n");
 
+    struct libevdev* evdev = libevdev_new();
+                libevdev_set_name(evdev, "Virtual Mouse");
+                libevdev_set_id_vendor(evdev, 0x01);
+                libevdev_set_id_product(evdev, 0x01);
+                libevdev_set_id_version(evdev, 0x01);
+                libevdev_set_id_bustype(evdev, BUS_USB);
+
+                check(libevdev_enable_event_type(evdev, EV_REL));
+                check(libevdev_enable_event_code(evdev, EV_REL, REL_X, NULL));
+                check(libevdev_enable_event_code(evdev, EV_REL, REL_Y, NULL));
+                check(libevdev_enable_event_code(evdev, EV_REL, SYN_REPORT, NULL));
+
+                check(libevdev_enable_event_type(evdev, EV_KEY));
+                check(libevdev_enable_event_code(evdev, EV_KEY, BTN_LEFT, NULL));
+                check(libevdev_enable_event_code(evdev, EV_KEY, BTN_RIGHT, NULL));
+
+                struct libevdev_uinput* uinput;
+                check(libevdev_uinput_create_from_device(evdev, LIBEVDEV_UINPUT_OPEN_MANAGED, &uinput));
+
     while (1) {
         int bytesRead = recvfrom(sockfd, &packet, sizeof(packet), 0, NULL, NULL);
 
@@ -51,7 +80,10 @@ int main() {
                 int targetX = (int)(packet.normX * 1600);
                 int targetY = (int)(packet.normY * 900);
 
-                printf("Move to: %d, %d\n", targetX, targetY);
+                check(libevdev_uinput_write_event(uinput, EV_REL, REL_X, targetX));
+                    check(libevdev_uinput_write_event(uinput, EV_REL, REL_Y, targetY));
+
+                    check(libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0));
             }
         }
         // recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr*)NULL, NULL);
