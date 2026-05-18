@@ -35,6 +35,10 @@ HWND hwnd;
 
 const wchar_t windowClassName[] = L"myWindowClass";
 
+bool isRemote = false;
+float virtualX = 1600.0f;
+float virtualY = 900.0f;
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
         case WM_CLOSE:
@@ -50,43 +54,35 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     return 0;
 }
 
-BOOL CreateInvisibleWindow(HINSTANCE hInstance, int nCmdShow) {
-    WNDCLASSEX wcx;
+BOOL CreateInvisibleWindow(HINSTANCE hInstance) {
+    WNDCLASSEX wcx = {0};
 
     wcx.cbSize = sizeof(wcx);
-    wcx.style = 0;
+    wcx.style = CS_HREDRAW | CS_VREDRAW;
     wcx.lpfnWndProc = WndProc;
-    wcx.cbClsExtra = 0;
-    wcx.cbWndExtra = 0;
     wcx.hInstance = hInstance;
-    wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);
     wcx.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wcx.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wcx.lpszMenuName = NULL;
     wcx.lpszClassName = windowClassName;
-    wcx.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 
     if (!RegisterClassEx(&wcx)) {
-        MessageBox(NULL, L"Window Registration Failed!", L"Error!", MB_ICONEXCLAMATION | MB_OK);
         return FALSE;
     }
 
-    hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, windowClassName, L"KVM",
-        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 240, 120, NULL, NULL, hInstance, NULL);
+    hwnd = CreateWindowEx(WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TRANSPARENT,
+        windowClassName,
+        L"KVM",
+        WS_POPUP, 0, 0,
+        GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+        NULL, NULL, hInstance, NULL
+    );
 
     if (hwnd == NULL) {
-        MessageBox(NULL, L"Window Creation Failed!", L"Error!", MB_ICONEXCLAMATION | MB_OK);
         return FALSE;
     }
 
-    ShowWindow(hwnd, nCmdShow);
-    UpdateWindow(hwnd);
+    SetLayeredWindowAttributes(hwnd, 0, 0, LWA_ALPHA);
 
-    while (GetMessage(&msg, NULL, 0, 0) > 0) {
-        TranslateMessage(&msg);
-        DispatchMessage(&msg);
-    }
-
+    ShowWindow(hwnd, SW_HIDE);
     return TRUE;
 }
 
@@ -97,29 +93,56 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    switch(wParam) {
-        case WM_LBUTTONDOWN:
-            status = "Left Click";
-            break;
-        case WM_RBUTTONDOWN:
-            status = "Right Click";
-            break;
-        case WM_MBUTTONDOWN:
-            status = "Middle Click";
-            break;
-        case WM_MOUSEMOVE:
+    int centerX = screenWidth / 2;
+    int centerY = screenHeight / 2;
+
+    if (!isRemote && wParam == WM_MOUSEMOVE && lp->pt.x <= 0) {
+        isRemote = true;
+        virtualX = 1600.0f;
+        virtualY = 450.0f;
+
+        ShowWindow(hwnd, SW_SHOW);
+        SetCursorPos(centerX, centerY);
+        return 1;
+    }
+
+    if (isRemote) {
+        if (lp->pt.x == centerX && lp->pt.y == centerY) {
+            return 1;
+        }
+
+        if (wParam == WM_MOUSEMOVE) {
+            int deltaX = lp->pt.x - centerX;
+            int deltaY = lp->pt.y - centerY;
+
+            virtualX += deltaX;
+            virtualY += deltaY;
+
+            if (virtualX >= 1600.0f) {
+                isRemote = false;
+                ShowWindow(hwnd, SW_HIDE);
+                SetCursorPos(1, centerY);
+                return 1;
+            }
+
+            if (virtualX < 0) virtualX = 0;
+            if (virtualY < 0) virtualY = 0;
+            if (virtualY > 900) virtualY = 900;
+
             MousePacket packet;
             packet.type = 1;
-            packet.normX = (float)lp->pt.x / screenWidth;
-            packet.normY = (float)lp->pt.y / screenHeight;
+            packet.normX = virtualX / 1600.0f;
+            packet.normY = virtualY / 900.0f;
             packet.button = 0;
 
             sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
-            break;
-    }
 
-    if (status != NULL) {
-        sendto(RecvSocket, status, (int)strlen(status), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
+            SetCursorPos(centerX, centerY);
+            return 1;
+        }
+
+        SetCursorPos(centerX, centerY);
+        return 1;
     }
 
     return CallNextHookEx(0, nCode, wParam, lParam);
@@ -181,7 +204,7 @@ int main() {
     printf("Hello client sent\n");
 
     HINSTANCE hInstance = GetModuleHandle(NULL);
-    if (!CreateInvisibleWindow(hInstance, SW_SHOW)) {
+    if (!CreateInvisibleWindow(hInstance)) {
         printf("Failed to initialize window\n");
         closesocket(RecvSocket);
         WSACleanup();
