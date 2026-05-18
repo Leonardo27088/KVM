@@ -31,6 +31,64 @@ struct sockaddr_in SenderAddr;
 int SenderAddrSize = sizeof (SenderAddr);
 
 MSG msg;
+HWND hwnd;
+
+const wchar_t windowClassName[] = L"myWindowClass";
+
+LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    switch (msg) {
+        case WM_CLOSE:
+            DestroyWindow(hwnd);
+            break;
+        case WM_DESTROY:
+            PostQuitMessage(0);
+            break;
+        default:
+            return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+
+    return 0;
+}
+
+BOOL CreateInvisibleWindow(HINSTANCE hInstance, int nCmdShow) {
+    WNDCLASSEX wcx;
+
+    wcx.cbSize = sizeof(wcx);
+    wcx.style = 0;
+    wcx.lpfnWndProc = WndProc;
+    wcx.cbClsExtra = 0;
+    wcx.cbWndExtra = 0;
+    wcx.hInstance = hInstance;
+    wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+    wcx.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wcx.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+    wcx.lpszMenuName = NULL;
+    wcx.lpszClassName = windowClassName;
+    wcx.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
+
+    if (!RegisterClassEx(&wcx)) {
+        MessageBox(NULL, L"Window Registration Failed!", L"Error!", MB_ICONEXCLAMATION | MB_OK);
+        return FALSE;
+    }
+
+    hwnd = CreateWindowEx(WS_EX_CLIENTEDGE, windowClassName, L"KVM",
+        WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 240, 120, NULL, NULL, hInstance, NULL);
+
+    if (hwnd == NULL) {
+        MessageBox(NULL, L"Window Creation Failed!", L"Error!", MB_ICONEXCLAMATION | MB_OK);
+        return FALSE;
+    }
+
+    ShowWindow(hwnd, nCmdShow);
+    UpdateWindow(hwnd);
+
+    while (GetMessage(&msg, NULL, 0, 0) > 0) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    return TRUE;
+}
 
 LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     MSLLHOOKSTRUCT* lp = (MSLLHOOKSTRUCT*)lParam;
@@ -122,14 +180,28 @@ int main() {
     sendto(RecvSocket, message, strlen(message), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
     printf("Hello client sent\n");
 
+    HINSTANCE hInstance = GetModuleHandle(NULL);
+    if (!CreateInvisibleWindow(hInstance, SW_SHOW)) {
+        printf("Failed to initialize window\n");
+        closesocket(RecvSocket);
+        WSACleanup();
+        return 1;
+    }
+
     HHOOK mouseHandle = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
 
     if (mouseHandle == NULL) {
         printf("Error");
+        closesocket(RecvSocket);
+        WSACleanup();
         return 1;
     }
 
-    GetMessage(&msg, NULL, 0, 0);
+    while (GetMessage(&msg, NULL, 0, 0) > 0) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+    
 
     printf("Finished recieving. Closing socket.\n");
     iResult = closesocket(RecvSocket);
@@ -141,5 +213,5 @@ int main() {
     UnhookWindowsHookEx(mouseHandle);
 
     WSACleanup();
-    return 0;
+    return msg.wParam;
 }
