@@ -112,7 +112,32 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             return 1;
         }
 
-        if (wParam == WM_MOUSEMOVE) {
+        if (wParam == WM_LBUTTONDOWN || wParam == WM_LBUTTONUP ||
+            wParam == WM_RBUTTONDOWN || wParam == WM_RBUTTONUP ||
+            wParam == WM_MOUSEHWHEEL) {
+
+            MousePacket packet;
+
+            packet.normX = 0;
+            packet.normY = 0;
+
+            if (wParam == WM_MOUSEWHEEL) {
+                packet.type = 3;
+                packet.code = 0x08;
+
+                short delta = (short)HIWORD(lp->mouseData);
+                packet.value = (delta > 0) ? 1 : -1;
+            } else {
+                packet.type = 2;
+
+                if (wParam == WM_LBUTTONDOWN || wParam == WM_LBUTTONUP) packet.code = 0x110;
+                if (wParam == WM_RBUTTONDOWN || wParam == WM_RBUTTONUP) packet.code = 0x111;
+
+                packet.value = (wParam == WM_LBUTTONDOWN || wParam == WM_RBUTTONDOWN) ? 1 : 0;
+            }
+            
+            sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
+        } else if (wParam == WM_MOUSEMOVE) {
             int deltaX = lp->pt.x - centerX;
             int deltaY = lp->pt.y - centerY;
 
@@ -131,6 +156,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             if (virtualY > 900) virtualY = 900;
 
             MousePacket packet;
+
             packet.type = 1;
             packet.normX = virtualX / 1600.0f;
             packet.normY = virtualY / 900.0f;
@@ -141,41 +167,6 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
             SetCursorPos(centerX, centerY);
             return 1;
-        } else {
-            switch (wParam) {
-                case WM_LBUTTONDOWN:
-                case WM_LBUTTONUP:
-                case WM_RBUTTONDOWN:
-                case WM_RBUTTONUP: {
-                    MousePacket packet;
-                    
-                    packet.type = 2;
-                    packet.normX = 0;
-                    packet.normY = 0;
-
-                    if (wParam == WM_LBUTTONDOWN || wParam == WM_LBUTTONUP) packet.code = 0x110;
-                    if (wParam == WM_RBUTTONDOWN || wParam == WM_RBUTTONUP) packet.code = 0x111;
-
-                    packet.value = (wParam == WM_LBUTTONDOWN || wParam == WM_RBUTTONDOWN) ? 1 : 0;
-
-                    sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
-                    break;
-                }
-                case WM_MOUSEHWHEEL: {
-                    MousePacket packet;
-
-                    packet.type = 3;
-                    packet.normX = 0;
-                    packet.normY = 0;
-                    packet.code = 0x08;
-
-                    short delta = (short)HIWORD(lp->mouseData);
-                    packet.value = (delta > 0) ? 1 : -1;
-
-                    sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
-                    break;
-                }
-            }
         }
 
         SetCursorPos(centerX, centerY);
