@@ -87,7 +87,10 @@ int main() {
     check(libevdev_enable_event_type(evdev, EV_KEY));
     check(libevdev_enable_event_code(evdev, EV_KEY, BTN_LEFT, NULL));
     check(libevdev_enable_event_code(evdev, EV_KEY, BTN_RIGHT, NULL));
-    libevdev_enable_event_code(evdev, EV_KEY, BTN_TOUCH, NULL);
+    check(libevdev_enable_event_code(evdev, EV_KEY, BTN_TOUCH, NULL));
+
+    check(libevdev_enable_event_type(evdev, EV_REL));
+    check(libevdev_enable_event_code(evdev, EV_REL, REL_WHEEL, NULL));
 
     struct libevdev_uinput* uinput;
     check(libevdev_uinput_create_from_device(evdev, LIBEVDEV_UINPUT_OPEN_MANAGED, &uinput));
@@ -102,6 +105,12 @@ int main() {
 
                 check(libevdev_uinput_write_event(uinput, EV_ABS, ABS_X, targetX));
                 check(libevdev_uinput_write_event(uinput, EV_ABS, ABS_Y, targetY));
+                check(libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0));
+            } else if (packet.type == 2) {
+                check(libevdev_uinput_write_event(uinput, EV_KEY, packet.code, packet.value));
+                check(libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0));
+            } else if (packet.type == 3) {
+                check(libevdev_uinput_write_event(uinput, EV_REL, packet.code, packet.value));
                 check(libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0));
             }
         }
