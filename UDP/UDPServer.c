@@ -16,7 +16,8 @@ typedef struct {
     uint8_t type;
     float normX;
     float normY;
-    uint8_t button;
+    uint16_t code;
+    int32_t value;
 } MousePacket;
 #pragma pack(pop)
 
