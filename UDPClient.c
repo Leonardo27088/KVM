@@ -79,18 +79,23 @@ int main() {
     libevdev_set_id_version(evdev, 0x01);
     libevdev_set_id_bustype(evdev, BUS_USB);
 
+    check(libevdev_enable_property(evdev, INPUT_PROP_POINTER));
+
     check(libevdev_enable_event_type(evdev, EV_ABS));
     check(libevdev_enable_event_code(evdev, EV_ABS, ABS_X, &abs_x));
     check(libevdev_enable_event_code(evdev, EV_ABS, ABS_Y, &abs_y));
-    check(libevdev_enable_event_code(evdev, EV_SYN, SYN_REPORT, 0));
 
     check(libevdev_enable_event_type(evdev, EV_KEY));
     check(libevdev_enable_event_code(evdev, EV_KEY, BTN_LEFT, NULL));
     check(libevdev_enable_event_code(evdev, EV_KEY, BTN_RIGHT, NULL));
+    check(libevdev_enable_event_code(evdev, EV_KEY, BTN_MIDDLE, NULL));
     check(libevdev_enable_event_code(evdev, EV_KEY, BTN_TOUCH, NULL));
 
     check(libevdev_enable_event_type(evdev, EV_REL));
     check(libevdev_enable_event_code(evdev, EV_REL, REL_WHEEL, NULL));
+
+    check(libevdev_enable_event_type(evdev, EV_SYN));
+    check(libevdev_enable_event_code(evdev, EV_SYN, SYN_REPORT, 0));
 
     struct libevdev_uinput* uinput;
     check(libevdev_uinput_create_from_device(evdev, LIBEVDEV_UINPUT_OPEN_MANAGED, &uinput));
