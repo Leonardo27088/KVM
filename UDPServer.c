@@ -129,6 +129,17 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             packet.value = (wParam == WM_LBUTTONDOWN || wParam == WM_RBUTTONDOWN || wParam == WM_MBUTTONDOWN) ? 1 : 0;
             
             sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
+        } else if (wParam == WM_XBUTTONDOWN || wParam == WM_XBUTTONUP) {
+            MousePacket packet = {0};
+
+            packet.normX = 0;
+            packet.normY = 0;
+
+            packet.type = 4;
+            packet.code = HIWORD(lp->mouseData);
+            packet.value = (wParam == WM_XBUTTONDOWN) ? 1 : 0;
+
+            sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
         } else if (wParam == WM_MOUSEWHEEL) {
             MousePacket packet = {0};
 
