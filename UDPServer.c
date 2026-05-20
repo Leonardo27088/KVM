@@ -89,7 +89,6 @@ BOOL CreateInvisibleWindow(HINSTANCE hInstance) {
 
 LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     MSLLHOOKSTRUCT* lp = (MSLLHOOKSTRUCT*)lParam;
-    const char* status = NULL;
 
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
@@ -108,34 +107,39 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     }
 
     if (isRemote) {
-        if (lp->pt.x == centerX && lp->pt.y == centerY) {
+        if (wParam == WM_MOUSEMOVE && lp->pt.x == centerX && lp->pt.y == centerY) {
             return 1;
         }
 
         if (wParam == WM_LBUTTONDOWN || wParam == WM_LBUTTONUP ||
             wParam == WM_RBUTTONDOWN || wParam == WM_RBUTTONUP ||
-            wParam == WM_MOUSEHWHEEL) {
+            wParam == WM_MBUTTONDOWN || wParam == WM_MBUTTONUP) {
 
-            MousePacket packet;
+            MousePacket packet = {0};
 
             packet.normX = 0;
             packet.normY = 0;
 
-            if (wParam == WM_MOUSEWHEEL) {
-                packet.type = 3;
-                packet.code = 0x08;
+            packet.type = 2;
 
-                short delta = (short)HIWORD(lp->mouseData);
-                packet.value = (delta > 0) ? 1 : -1;
-            } else {
-                packet.type = 2;
+            if (wParam == WM_LBUTTONDOWN || wParam == WM_LBUTTONUP) packet.code = 0x110;
+            if (wParam == WM_RBUTTONDOWN || wParam == WM_RBUTTONUP) packet.code = 0x111;
+            if (wParam == WM_MBUTTONDOWN || wParam == WM_MBUTTONUP) packet.code = 0x112;
 
-                if (wParam == WM_LBUTTONDOWN || wParam == WM_LBUTTONUP) packet.code = 0x110;
-                if (wParam == WM_RBUTTONDOWN || wParam == WM_RBUTTONUP) packet.code = 0x111;
-
-                packet.value = (wParam == WM_LBUTTONDOWN || wParam == WM_RBUTTONDOWN) ? 1 : 0;
-            }
+            packet.value = (wParam == WM_LBUTTONDOWN || wParam == WM_RBUTTONDOWN || wParam == WM_MBUTTONDOWN) ? 1 : 0;
             
+            sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
+        } else if (wParam == WM_MOUSEWHEEL) {
+            MousePacket packet = {0};
+
+            packet.normX = 0;
+            packet.normY = 0;
+            packet.type = 3;
+            packet.code = 0x08;
+
+            short delta = (short)HIWORD(lp->mouseData);
+            packet.value = (delta > 0) ? -1 : 1;
+
             sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
         } else if (wParam == WM_MOUSEMOVE) {
             int deltaX = lp->pt.x - centerX;
@@ -155,7 +159,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             if (virtualY < 0) virtualY = 0;
             if (virtualY > 900) virtualY = 900;
 
-            MousePacket packet;
+            MousePacket packet = {0};
 
             packet.type = 1;
             packet.normX = virtualX / 1600.0f;
