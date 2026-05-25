@@ -296,8 +296,8 @@ int main() {
                 KeyPacket* kpkt = (KeyPacket*)buf;
                 int linuxKey = vk_to_linux(kpkt->code);
                 if (linuxKey >= 0) {
-                    check(libevdev_uinput_write_event(uinput, EV_KEY, linuxKey, kpkt->value));
-                    check(libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0));
+                    check(libevdev_uinput_write_event(uinput_kb, EV_KEY, linuxKey, kpkt->value));
+                    check(libevdev_uinput_write_event(uinput_kb, EV_SYN, SYN_REPORT, 0));
                 }
             } else if (bytesRead == sizeof(MousePacket)) {
                 memcpy(&packet, buf, sizeof(packet));
