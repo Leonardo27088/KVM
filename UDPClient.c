@@ -95,7 +95,7 @@ int main() {
     printf("Hello Server sent\n");
 
     struct libevdev* evdev = libevdev_new();
-    libevdev_set_name(evdev, "Virtual Mouse");
+    libevdev_set_name(evdev, "KVM Virtual Mouse");
     libevdev_set_id_vendor(evdev, 0x01);
     libevdev_set_id_product(evdev, 0x01);
     libevdev_set_id_version(evdev, 0x01);
@@ -150,6 +150,23 @@ int main() {
     check(libevdev_uinput_create_from_device(evdev_tp, LIBEVDEV_UINPUT_OPEN_MANAGED, &uinput_tp));
 
     libevdev_free(evdev_tp);
+
+    struct libevdev* evdev_kb = libevdev_new();
+    libevdev_set_name(evdev_kb, "KVM Virtual Keyboard");
+    libevdev_set_id_bustype(evdev_kb, BUS_USB);
+
+    check(libevdev_enable_event_type(evdev_kb, EV_KEY));
+
+    for (int key = KEY_ESC; key <= KEY_KPDOT; key++) {
+        libevdev_enable_event_code(evdev_kb, EV_KEY, key, NULL);
+    }
+
+    check(libevdev_enable_event_type(evdev_kb, EV_SYN));
+
+    struct libevdev_uinput* uinput_kb;
+    check(libevdev_uinput_create_from_service(evdev_kb, LIBEVDEV_UINPUT_OPEN_MANAGED, &uinput_kb));
+
+    libevdev_free(evdev_kb);
 
     while (1) {
         int bytesRead = recvfrom(sockfd, &packet, sizeof(packet), 0, NULL, NULL);
