@@ -136,7 +136,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             packet.normY = 0;
 
             packet.type = 4;
-            packet.code = HIWORD(lp->mouseData);
+            packet.code = 0x14e;
             packet.value = (wParam == WM_XBUTTONDOWN) ? 1 : 0;
 
             sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
