@@ -25,6 +25,14 @@ typedef struct {
 
 MousePacket packet;
 
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t type;
+    uint32_t code;
+    int32_t value;
+} KeyPacket;
+#pragma pack(pop)
+
 static void check(int i) {
     if (i < 0) {
         printf("%s\n", strerror(-i));
