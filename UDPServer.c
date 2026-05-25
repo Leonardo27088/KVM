@@ -21,6 +21,14 @@ typedef struct {
 } MousePacket;
 #pragma pack(pop)
 
+#pragma pack(push, 1)
+typedef struct {
+    uint8_t type;
+    uint32_t code;
+    int32_t value;
+} KeyPacket;
+#pragma pack(pop)
+
 #pragma comment (lib, "Ws2_32.lib");
 
 #define DEFAULT_BUFLEN 512
