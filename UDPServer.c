@@ -283,7 +283,16 @@ int main() {
     HHOOK mouseHandle = SetWindowsHookEx(WH_MOUSE_LL, LowLevelMouseProc, NULL, 0);
 
     if (mouseHandle == NULL) {
-        printf("Error");
+        printf("Error mouse hook\n");
+        closesocket(RecvSocket);
+        WSACleanup();
+        return 1;
+    }
+
+    HHOOK keyboardHandle = SetWindowsHookEx(WH_KEYBOARD_LL, LowLevelKeyboardProc, NULL, 0);
+
+    if (keyboardHandle == NULL) {
+        printf("Error keyboard hook\n");
         closesocket(RecvSocket);
         WSACleanup();
         return 1;
