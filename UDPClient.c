@@ -186,7 +186,6 @@ static int vk_to_linux(uint32_t vk) {
         case 0xDB: return KEY_LEFTBRACE;
         case 0xDC: return KEY_BACKSLASH;
         case 0xDD: return KEY_RIGHTBRACE;
-        case 0xDE: return KEY_APOSTROPHE;
         default: return -1;
     }
 }
@@ -281,6 +280,11 @@ int main() {
     }
 
     check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_LEFTMETA, NULL));
+    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_LEFT, NULL));
+    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_RIGHT, NULL));
+    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_UP, NULL));
+    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_DOWN, NULL));
+    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_RIGHTALT, NULL));
 
     check(libevdev_enable_event_type(evdev_kb, EV_SYN));
 
