@@ -199,6 +199,24 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
     return CallNextHookEx(0, nCode, wParam, lParam);
 }
 
+LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
+    if (!isRemote) return CallNextHookEx(0, nCode, wParam, lParam);
+
+    KBDLLHOOKSTRUCT* kp = (KBDLLHOOKSTRUCT*)lParam;
+
+    KeyPacket packet = {0};
+    packet.type = 5;
+    packet.code = kp->vkCode;
+
+    if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) packet.value = 1;
+    else if (wParam == WM_KEYUP || wParam == WM_SYSKEYUP) packet.value = 0;
+    else return CallNextHookEx(0, nCode, wParam, lParam);
+
+    sendto(RecvSocket, (const char *)&packet, sizeof(packet), 0, (SOCKADDR *) &SenderAddr, sizeof(SenderAddr));
+
+    return 1;
+}
+
 int main() {
     WSADATA wsaData;
     int iResult;
