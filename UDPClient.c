@@ -283,20 +283,18 @@ int main() {
     check(libevdev_enable_event_type(evdev_kb, EV_SYN));
 
     struct libevdev_uinput* uinput_kb;
-    check(libevdev_uinput_create_from_service(evdev_kb, LIBEVDEV_UINPUT_OPEN_MANAGED, &uinput_kb));
+    check(libevdev_uinput_create_from_device(evdev_kb, LIBEVDEV_UINPUT_OPEN_MANAGED, &uinput_kb));
 
     libevdev_free(evdev_kb);
 
     while (1) {
-        int bytesRead = recvfrom(sockfd, &packet, sizeof(packet), 0, NULL, NULL);
-
         uint8_t buf[32];
         int bytesRead = recvfrom(sockfd, buf, sizeof(buf), 0, NULL, NULL);
         if (bytesRead > 0) {
             uint8_t type = buf[0];
             if (type == 5) {
                 KeyPacket* kpkt = (KeyPacket*)buf;
-                int linuxKey = vk_to_linux(kpkt->vkCode);
+                int linuxKey = vk_to_linux(kpkt->code);
                 if (linuxKey >= 0) {
                     check(libevdev_uinput_write_event(uinput, EV_KEY, linuxKey, kpkt->value));
                     check(libevdev_uinput_write_event(uinput, EV_SYN, SYN_REPORT, 0));
