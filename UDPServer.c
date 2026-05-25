@@ -312,6 +312,7 @@ int main() {
     }
 
     UnhookWindowsHookEx(mouseHandle);
+    UnhookWindowsHookEx(keyboardHandle);
 
     WSACleanup();
     return msg.wParam;
