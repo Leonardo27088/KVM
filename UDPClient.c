@@ -280,6 +280,8 @@ int main() {
         libevdev_enable_event_code(evdev_kb, EV_KEY, key, NULL);
     }
 
+    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_LEFTMETA, NULL));
+
     check(libevdev_enable_event_type(evdev_kb, EV_SYN));
 
     struct libevdev_uinput* uinput_kb;
