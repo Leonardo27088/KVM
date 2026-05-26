@@ -2,6 +2,12 @@
 
 #define PORT 27015
 
+#define PKT_MOVE 1
+#define PKT_BTN 2
+#define PKT_WHEEL 3
+#define PKT_SWIPE 4
+#define PKT_KEY 5
+
 #pragma pack(push, 1)
 typedef struct {
     uint8_t type;
