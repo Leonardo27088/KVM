@@ -1,5 +1,5 @@
 #include "hooks.h"
-#include "protocol.h"
+#include "protocolServer.h"
 
 extern SOCKET RecvSocket;
 extern struct sockaddr_in SenderAddr;
