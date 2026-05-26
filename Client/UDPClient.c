@@ -10,6 +10,8 @@
 #include <libevdev-1.0/libevdev/libevdev.h>
 #include <libevdev-1.0/libevdev/libevdev-uinput.h>
 
+#include "keymap.h"
+
 #define PORT 27015
 #define DEFAULT_BUFLEN 512
 
