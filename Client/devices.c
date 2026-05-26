@@ -118,16 +118,9 @@ struct libevdev_uinput* create_keyboard() {
 
     check(libevdev_enable_event_type(evdev_kb, EV_KEY));
 
-    for (int key = KEY_ESC; key <= KEY_KPDOT; key++) {
+    for (int key = KEY_ESC; key <= KEY_MICMUTE; key++) {
         libevdev_enable_event_code(evdev_kb, EV_KEY, key, NULL);
     }
-
-    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_LEFTMETA, NULL));
-    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_LEFT, NULL));
-    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_RIGHT, NULL));
-    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_UP, NULL));
-    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_DOWN, NULL));
-    check(libevdev_enable_event_code(evdev_kb, EV_KEY, KEY_RIGHTALT, NULL));
 
     check(libevdev_enable_event_type(evdev_kb, EV_SYN));
 
