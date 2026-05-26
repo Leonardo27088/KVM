@@ -112,7 +112,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             packet.normX = 0;
             packet.normY = 0;
 
-            packet.type = 2;
+            packet.type = PKT_BTN;
 
             if (wParam == WM_LBUTTONDOWN || wParam == WM_LBUTTONUP) packet.code = 0x110;
             if (wParam == WM_RBUTTONDOWN || wParam == WM_RBUTTONUP) packet.code = 0x111;
@@ -127,7 +127,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
             packet.normX = 0;
             packet.normY = 0;
 
-            packet.type = 4;
+            packet.type = PKT_SWIPE;
             packet.code = 0x14e;
             packet.value = (wParam == WM_XBUTTONDOWN) ? 1 : 0;
 
@@ -137,7 +137,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
             packet.normX = 0;
             packet.normY = 0;
-            packet.type = 3;
+            packet.type = PKT_WHEEL;
             packet.code = 0x08;
 
             short delta = (short)HIWORD(lp->mouseData);
@@ -164,7 +164,7 @@ LRESULT CALLBACK LowLevelMouseProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
             MousePacket packet = {0};
 
-            packet.type = 1;
+            packet.type = PKT_MOVE;
             packet.normX = virtualX / 1600.0f;
             packet.normY = virtualY / 900.0f;
             packet.code = 0;
@@ -189,7 +189,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
     KBDLLHOOKSTRUCT* kp = (KBDLLHOOKSTRUCT*)lParam;
 
     KeyPacket packet = {0};
-    packet.type = 5;
+    packet.type = PKT_KEY;
     packet.code = kp->vkCode;
 
     if (wParam == WM_KEYDOWN || wParam == WM_SYSKEYDOWN) packet.value = 1;
