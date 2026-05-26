@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdint.h>
 
 #define PORT 27015
