@@ -4,5 +4,5 @@
 #include <libevdev-1.0/libevdev/libevdev-uinput.h>
 
 struct libevdev_uinput* create_mouse();
-struct livevdev_uinput* create_touchpad();
-struct livebdev_uinput* create_keyboard();
+struct libevdev_uinput* create_touchpad();
+struct libebdev_uinput* create_keyboard();
